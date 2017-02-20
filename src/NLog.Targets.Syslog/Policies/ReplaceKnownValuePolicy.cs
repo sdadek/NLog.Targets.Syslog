@@ -9,20 +9,20 @@ namespace NLog.Targets.Syslog.Policies
 {
     internal class ReplaceKnownValuePolicy : IBasicPolicy<string, string>
     {
-        private readonly EnforcementConfig enforcementConfig;
-        private readonly string searchFor;
-        private readonly string replaceWith;
+        private readonly EnforcementConfig _enforcementConfig;
+        private readonly string _searchFor;
+        private readonly string _replaceWith;
 
         public ReplaceKnownValuePolicy(EnforcementConfig enforcementConfig, string searchFor, string replaceWith)
         {
-            this.enforcementConfig = enforcementConfig;
-            this.searchFor = searchFor;
-            this.replaceWith = replaceWith;
+            _enforcementConfig = enforcementConfig;
+            _searchFor = searchFor;
+            _replaceWith = replaceWith;
         }
 
         public bool IsApplicable()
         {
-            return enforcementConfig.ReplaceInvalidCharacters && !string.IsNullOrEmpty(searchFor);
+            return _enforcementConfig.ReplaceInvalidCharacters && !string.IsNullOrEmpty(_searchFor);
         }
 
         public string Apply(string s)
@@ -30,8 +30,8 @@ namespace NLog.Targets.Syslog.Policies
             if (s.Length == 0)
                 return s;
 
-            var replaced = Regex.Replace(s, searchFor, replaceWith);
-            InternalLogger.Trace($"Replaced '{searchFor}' (if found) with '{replaceWith}' given known value '{s}': '{replaced}'");
+            var replaced = Regex.Replace(s, _searchFor, _replaceWith);
+            InternalLogger.Trace($"Replaced '{_searchFor}' (if found) with '{_replaceWith}' given known value '{s}': '{replaced}'");
             return replaced;
         }
     }

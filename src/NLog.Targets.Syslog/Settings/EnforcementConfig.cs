@@ -5,10 +5,11 @@ using System;
 
 namespace NLog.Targets.Syslog.Settings
 {
-    /// <summary>Enforcement configuration</summary>
-    public class EnforcementConfig
+	/// <summary>Enforcement configuration</summary>
+	[Config.NLogConfigurationItem]
+	public class EnforcementConfig
     {
-        private int messageProcessors;
+        private int _messageProcessors;
 
         /// <summary>Throttling to be triggered when a configured number of log entries are waiting to be processed</summary>
         public ThrottlingConfig Throttling { get; set; }
@@ -16,8 +17,8 @@ namespace NLog.Targets.Syslog.Settings
         /// <summary>The amount of parallel message processors</summary>
         public int MessageProcessors
         {
-            get { return messageProcessors; }
-            set { messageProcessors = value <= 0 ? Environment.ProcessorCount : value; }
+            get { return _messageProcessors; }
+            set { _messageProcessors = value <= 0 ? Environment.ProcessorCount : value; }
         }
 
         /// <summary>Whether or not to split each log entry by newlines and send each line separately</summary>

@@ -9,17 +9,17 @@ namespace NLog.Targets.Syslog.Policies
 {
     internal class SplitOnNewLinePolicy : IBasicPolicy<string, string[]>
     {
-        private readonly EnforcementConfig enforcementConfig;
+        private readonly EnforcementConfig _enforcementConfig;
         private static readonly char[] LineSeps = { '\r', '\n' };
 
         public SplitOnNewLinePolicy(EnforcementConfig enforcementConfig)
         {
-            this.enforcementConfig = enforcementConfig;
+            _enforcementConfig = enforcementConfig;
         }
 
         public bool IsApplicable()
         {
-            return enforcementConfig.SplitOnNewLine;
+            return _enforcementConfig.SplitOnNewLine;
         }
 
         public string[] Apply(string s)

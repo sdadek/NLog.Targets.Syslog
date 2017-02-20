@@ -3,8 +3,9 @@
 
 namespace NLog.Targets.Syslog.Settings
 {
-    /// <summary>UDP configuration</summary>
-    public class UdpConfig
+	/// <summary>UDP configuration</summary>
+	[Config.NLogConfigurationItem]
+	public class UdpConfig
     {
         private const string Localhost = "localhost";
         private const int DefaultPort = 514;

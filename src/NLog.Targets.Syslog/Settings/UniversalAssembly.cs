@@ -11,9 +11,10 @@ namespace NLog.Targets.Syslog.Settings
     {
         public static Assembly EntryAssembly()
         {
-            return Assembly.GetEntryAssembly() ??
-                new StackTrace().EntryAssembly() ??
-                Assembly.GetExecutingAssembly();
+			return Assembly.GetEntryAssembly();
+				//??
+				//new StackTrace().EntryAssembly() ??
+				//Assembly.GetExecutingAssembly();
         }
     }
 }

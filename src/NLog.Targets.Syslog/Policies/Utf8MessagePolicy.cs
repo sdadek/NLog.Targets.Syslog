@@ -8,17 +8,17 @@ namespace NLog.Targets.Syslog.Policies
     internal class Utf8MessagePolicy
     {
         private const bool AssumeAsciiEncoding = false;
-        private readonly TruncateToComputedValuePolicy truncatePolicy;
+        private readonly TruncateToComputedValuePolicy _truncatePolicy;
 
         public Utf8MessagePolicy(EnforcementConfig enforcementConfig)
         {
-            truncatePolicy = new TruncateToComputedValuePolicy(enforcementConfig, AssumeAsciiEncoding);
+            _truncatePolicy = new TruncateToComputedValuePolicy(enforcementConfig, AssumeAsciiEncoding);
         }
 
         public void Apply(ByteArray bytes)
         {
-            if (truncatePolicy.IsApplicable())
-                truncatePolicy.Apply(bytes);
+            if (_truncatePolicy.IsApplicable())
+                _truncatePolicy.Apply(bytes);
         }
     }
 }

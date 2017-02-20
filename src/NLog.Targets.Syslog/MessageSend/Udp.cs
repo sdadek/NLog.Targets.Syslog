@@ -10,28 +10,28 @@ namespace NLog.Targets.Syslog.MessageSend
 {
     internal class Udp : MessageTransmitter
     {
-        private readonly UdpClient udp;
-        private volatile bool disposed;
+        private readonly UdpClient _udp;
+        private volatile bool _disposed;
 
         public Udp(UdpConfig udpConfig) : base(udpConfig.Server, udpConfig.Port)
         {
-            udp = new UdpClient(IpAddress, Port);
-        }
+            _udp = new UdpClient();
+		}
 
-        public override Task SendMessageAsync(ByteArray message, CancellationToken token)
+        public override async Task SendMessageAsync(ByteArray message, CancellationToken token)
         {
-            if (token.IsCancellationRequested)
-                return Task.FromResult<object>(null);
+			if (token.IsCancellationRequested)
+				return;
 
-            return udp.SendAsync(message, message.Length);
-        }
+            await _udp.SendAsync(message, message.Length, await GetHostAddresses(), Port);
+		}
 
         public override void Dispose()
         {
-            if (disposed)
+            if (_disposed)
                 return;
-            disposed = true;
-            udp.Close();
+            _disposed = true;
+			_udp.Dispose();
         }
     }
 }

@@ -8,21 +8,21 @@ namespace NLog.Targets.Syslog.Policies
 {
     internal abstract class PolicySet
     {
-        private readonly List<IBasicPolicy<string, string>> policies;
+        private readonly List<IBasicPolicy<string, string>> _policies;
 
         protected PolicySet()
         {
-            policies = new List<IBasicPolicy<string, string>>();
+            _policies = new List<IBasicPolicy<string, string>>();
         }
 
         protected void AddPolicies(IEnumerable<IBasicPolicy<string, string>> policiesToAdd)
         {
-            policies.AddRange(policiesToAdd);
+            _policies.AddRange(policiesToAdd);
         }
 
         public string Apply(string s)
         {
-            var afterApplication = policies
+            var afterApplication = _policies
                 .Where(p => p.IsApplicable())
                 .Aggregate(s, (acc, curr) => curr.Apply(acc));
             return afterApplication;

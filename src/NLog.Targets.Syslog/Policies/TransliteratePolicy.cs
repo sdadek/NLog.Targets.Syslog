@@ -8,16 +8,16 @@ namespace NLog.Targets.Syslog.Policies
 {
     internal class TransliteratePolicy : IBasicPolicy<string, string>
     {
-        private readonly EnforcementConfig enforcementConfig;
+        private readonly EnforcementConfig _enforcementConfig;
 
         public TransliteratePolicy(EnforcementConfig enforcementConfig)
         {
-            this.enforcementConfig = enforcementConfig;
+            _enforcementConfig = enforcementConfig;
         }
 
         public bool IsApplicable()
         {
-            return enforcementConfig.Transliterate;
+            return _enforcementConfig.Transliterate;
         }
 
         public string Apply(string s)

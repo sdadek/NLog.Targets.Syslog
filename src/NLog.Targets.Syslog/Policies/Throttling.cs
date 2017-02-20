@@ -5,6 +5,7 @@ using System;
 using System.Threading;
 using NLog.Common;
 using NLog.Targets.Syslog.Settings;
+using System.Threading.Tasks;
 
 namespace NLog.Targets.Syslog.Policies
 {
@@ -33,7 +34,7 @@ namespace NLog.Targets.Syslog.Policies
             Delay = throttlingConfig.Delay;
         }
 
-        public void Apply(int waitingLogEntries, Action<int> actionWithTimeout)
+        public async Task Apply(int waitingLogEntries, Action<int> actionWithTimeout)
         {
             if (Strategy == ThrottlingStrategy.None || waitingLogEntries < Limit)
             {
@@ -47,11 +48,11 @@ namespace NLog.Targets.Syslog.Policies
                 return;
             }
 
-            ApplyDeferment(waitingLogEntries);
+            await ApplyDeferment(waitingLogEntries);
             actionWithTimeout(CalculateTimeout(waitingLogEntries));
         }
 
-        private void ApplyDeferment(int waitingLogEntries)
+        private async Task ApplyDeferment(int waitingLogEntries)
         {
             var deferStrategy = Strategy == ThrottlingStrategy.DeferForFixedTime ||
                 Strategy == ThrottlingStrategy.DeferForPercentageTime;
@@ -61,7 +62,7 @@ namespace NLog.Targets.Syslog.Policies
 
             var deferment = FixedTime(Delay, waitingLogEntries);
             InternalLogger.Warn($"Applying defer throttling strategy ({deferment} ms)");
-            Thread.SpinWait(deferment);
+            await Task.Delay(deferment);
         }
 
         private int CalculateTimeout(int waitingLogEntries)

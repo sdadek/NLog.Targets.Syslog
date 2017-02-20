@@ -19,26 +19,26 @@ namespace NLog.Targets.Syslog.MessageSend
         private static readonly TimeSpan ZeroSecondsTimeSpan = TimeSpan.FromSeconds(0);
         private static readonly byte[] LineFeedBytes = { 0x0A };
 
-        private volatile bool neverConnected;
-        private readonly TimeSpan recoveryTime;
-        private readonly KeepAlive keepAlive;
-        private readonly int connectionCheckTimeout;
-        private readonly bool useTls;
-        private readonly int dataChunkSize;
-        private readonly FramingMethod framing;
-        private TcpClient tcp;
-        private Stream stream;
-        private volatile bool disposed;
+        private volatile bool _neverConnected;
+        private readonly TimeSpan _recoveryTime;
+        private readonly KeepAlive _keepAlive;
+        private readonly int _connectionCheckTimeout;
+        private readonly bool _useTls;
+        private readonly int _dataChunkSize;
+        private readonly FramingMethod _framing;
+        private TcpClient _tcp;
+        private Stream _stream;
+        private volatile bool _disposed;
 
         public Tcp(TcpConfig tcpConfig) : base(tcpConfig.Server, tcpConfig.Port)
         {
-            neverConnected = true;
-            recoveryTime = TimeSpan.FromMilliseconds(tcpConfig.ReconnectInterval);
-            keepAlive = new KeepAlive(tcpConfig.KeepAlive);
-            connectionCheckTimeout = tcpConfig.ConnectionCheckTimeout;
-            useTls = tcpConfig.UseTls;
-            framing = tcpConfig.Framing;
-            dataChunkSize = tcpConfig.DataChunkSize;
+            _neverConnected = true;
+            _recoveryTime = TimeSpan.FromMilliseconds(tcpConfig.ReconnectInterval);
+            _keepAlive = new KeepAlive(tcpConfig.KeepAlive);
+            _connectionCheckTimeout = tcpConfig.ConnectionCheckTimeout;
+            _useTls = tcpConfig.UseTls;
+            _framing = tcpConfig.Framing;
+            _dataChunkSize = tcpConfig.DataChunkSize;
         }
 
         public override Task SendMessageAsync(ByteArray message, CancellationToken token)
@@ -46,11 +46,11 @@ namespace NLog.Targets.Syslog.MessageSend
             if (token.IsCancellationRequested)
                 return Task.FromResult<object>(null);
 
-            if (tcp?.Connected == true && IsSocketConnected())
+            if (_tcp?.Connected == true && IsSocketConnected())
                 return WriteAsync(message, token);
 
-            var delay = neverConnected ? ZeroSecondsTimeSpan : recoveryTime;
-            neverConnected = false;
+            var delay = _neverConnected ? ZeroSecondsTimeSpan : _recoveryTime;
+            _neverConnected = false;
 
             return Task.Delay(delay, token)
                 .Then(_ => InitTcpClient(), token)
@@ -63,10 +63,10 @@ namespace NLog.Targets.Syslog.MessageSend
 
         private bool IsSocketConnected()
         {
-            if (connectionCheckTimeout <= 0)
+            if (_connectionCheckTimeout <= 0)
                 return true;
 
-            return  tcp.Client.Poll(connectionCheckTimeout, SelectMode.SelectRead) && tcp.Client.Available == 0;
+            return  _tcp.Client.Poll(_connectionCheckTimeout, SelectMode.SelectRead) && _tcp.Client.Available == 0;
         }
 
         private Task InitTcpClient()
@@ -74,33 +74,36 @@ namespace NLog.Targets.Syslog.MessageSend
             DisposeSslStreamNotTcpClientInnerStream();
             DisposeTcpClientAndItsInnerStream();
 
-            tcp = new TcpClient();
-            tcp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, true);
-            tcp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, false);
-            tcp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger, new LingerOption(true, 0));
+            _tcp = new TcpClient();
+            _tcp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, true);
+            _tcp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, false);
+            _tcp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger, new LingerOption(true, 0));
             // Call WSAIoctl via IOControl
-            tcp.Client.IOControl(IOControlCode.KeepAliveValues, keepAlive.ToByteArray(), null);
+            _tcp.Client.IOControl(IOControlCode.KeepAliveValues, _keepAlive.ToByteArray(), null);
 
             return Task.FromResult<object>(null);
         }
 
-        private Task ConnectAsync()
+        private async Task ConnectAsync()
         {
-            return tcp
-                .ConnectAsync(IpAddress, Port)
-                .Then(_ => stream = SslDecorate(tcp), CancellationToken.None);
+			var ipAddresss = await GetHostAddresses();
+
+            await _tcp
+                .ConnectAsync(ipAddresss, Port)
+                .Then(async _ => _stream = await SslDecorate(_tcp), CancellationToken.None);
         }
 
-        private Stream SslDecorate(TcpClient tcpClient)
+        private async Task<Stream> SslDecorate(TcpClient tcpClient)
         {
             var tcpStream = tcpClient.GetStream();
 
-            if (!useTls)
+            if (!_useTls)
                 return tcpStream;
 
             // Do not dispose TcpClient inner stream when disposing SslStream (TcpClient disposes it)
             var sslStream = new SslStream(tcpStream, true);
-            sslStream.AuthenticateAsClient(Server, null, SslProtocols.Tls12, false);
+			await sslStream.AuthenticateAsClientAsync(Server, null, SslProtocols.Tls12, false);
+			
             return sslStream;
         }
 
@@ -113,7 +116,7 @@ namespace NLog.Targets.Syslog.MessageSend
 
         private Task FramingTask(ByteArray message)
         {
-            if (framing == FramingMethod.NonTransparent)
+            if (_framing == FramingMethod.NonTransparent)
             {
                 message.Append(LineFeedBytes);
                 return Task.FromResult<object>(null);
@@ -121,8 +124,9 @@ namespace NLog.Targets.Syslog.MessageSend
 
             var octetCount = message.Length;
             var prefix = new ASCIIEncoding().GetBytes($"{octetCount} ");
-            return Task.Factory.SafeFromAsync(stream.BeginWrite, stream.EndWrite, prefix, 0, prefix.Length, null);
-        }
+
+			return _stream.WriteAsync(prefix, 0, prefix.Length);
+		}
 
         private Task WriteAsync(int offset, ByteArray data, CancellationToken token)
         {
@@ -130,20 +134,19 @@ namespace NLog.Targets.Syslog.MessageSend
                 return Task.FromResult<object>(null);
 
             var toBeWrittenTotal = data.Length - offset;
-            var isLastWrite = toBeWrittenTotal <= dataChunkSize;
-            var count = isLastWrite ? toBeWrittenTotal : dataChunkSize;
+            var isLastWrite = toBeWrittenTotal <= _dataChunkSize;
+            var count = isLastWrite ? toBeWrittenTotal : _dataChunkSize;
 
-            return Task.Factory
-                .SafeFromAsync(stream.BeginWrite, stream.EndWrite, (byte[])data, offset, count, null)
-                .Then(task => isLastWrite ? task : WriteAsync(offset + dataChunkSize, data, token), token)
+            return _stream.WriteAsync(data, offset, count)
+                .Then(task => isLastWrite ? task : WriteAsync(offset + _dataChunkSize, data, token), token)
                 .Unwrap();
         }
 
         public override void Dispose()
         {
-            if (disposed)
+            if (_disposed)
                 return;
-            disposed = true;
+            _disposed = true;
 
             DisposeSslStreamNotTcpClientInnerStream();
             DisposeTcpClientAndItsInnerStream();
@@ -151,13 +154,13 @@ namespace NLog.Targets.Syslog.MessageSend
 
         private void DisposeSslStreamNotTcpClientInnerStream()
         {
-            if (useTls)
-                stream?.Dispose();
+            if (_useTls)
+                _stream?.Dispose();
         }
 
         private void DisposeTcpClientAndItsInnerStream()
         {
-            tcp?.Close();
+			_tcp?.Dispose();
         }
     }
 }

@@ -14,25 +14,25 @@ namespace NLog.Targets.Syslog
 {
     internal class LogEventMsgSet
     {
-        private AsyncLogEventInfo asyncLogEvent;
-        private readonly ByteArray buffer;
-        private readonly MessageBuilder messageBuilder;
-        private readonly MessageTransmitter messageTransmitter;
-        private int currentMessage;
-        private string[] logEntries;
+        private AsyncLogEventInfo _asyncLogEvent;
+        private readonly ByteArray _buffer;
+        private readonly MessageBuilder _messageBuilder;
+        private readonly MessageTransmitter _messageTransmitter;
+        private int _currentMessage;
+        private string[] _logEntries;
 
         public LogEventMsgSet(AsyncLogEventInfo asyncLogEvent, ByteArray buffer, MessageBuilder messageBuilder, MessageTransmitter messageTransmitter)
         {
-            this.asyncLogEvent = asyncLogEvent;
-            this.buffer = buffer;
-            this.messageBuilder = messageBuilder;
-            this.messageTransmitter = messageTransmitter;
-            currentMessage = 0;
+            _asyncLogEvent = asyncLogEvent;
+            _buffer = buffer;
+            _messageBuilder = messageBuilder;
+            _messageTransmitter = messageTransmitter;
+            _currentMessage = 0;
         }
 
         public LogEventMsgSet Build(Layout layout)
         {
-            logEntries = messageBuilder.BuildLogEntries(asyncLogEvent.LogEvent, layout);
+            _logEntries = _messageBuilder.BuildLogEntries(_asyncLogEvent.LogEvent, layout);
             return this;
         }
 
@@ -47,21 +47,21 @@ namespace NLog.Targets.Syslog
                 return tcs.CanceledTask();
 
             if (AllSent)
-                return tcs.SucceededTask(() => asyncLogEvent.Continuation(null));
+                return tcs.SucceededTask(() => _asyncLogEvent.Continuation(null));
 
             try
             {
                 PrepareMessage();
 
-                messageTransmitter
-                    .SendMessageAsync(buffer, token)
+                _messageTransmitter
+                    .SendMessageAsync(_buffer, token)
                     .ContinueWith(t =>
                     {
                         if (t.IsCanceled)
                             return tcs.CanceledTask();
                         if (t.Exception != null)
                         {
-                            asyncLogEvent.Continuation(t.Exception.GetBaseException());
+                            _asyncLogEvent.Continuation(t.Exception.GetBaseException());
                             tcs.SetException(t.Exception);
                             return Task.FromResult<object>(null);
                         }
@@ -77,13 +77,13 @@ namespace NLog.Targets.Syslog
             }
         }
 
-        private bool AllSent => currentMessage == logEntries.Length;
+        private bool AllSent => _currentMessage == _logEntries.Length;
 
-        private void PrepareMessage() => messageBuilder.PrepareMessage(buffer, asyncLogEvent.LogEvent, logEntries[currentMessage++]);
+        private void PrepareMessage() => _messageBuilder.PrepareMessage(_buffer, _asyncLogEvent.LogEvent, _logEntries[_currentMessage++]);
 
         public override string ToString()
         {
-            return asyncLogEvent.ToFormattedMessage();
+            return _asyncLogEvent.ToFormattedMessage();
         }
     }
 }

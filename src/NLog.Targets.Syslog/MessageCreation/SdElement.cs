@@ -13,19 +13,19 @@ namespace NLog.Targets.Syslog.MessageCreation
         private static readonly byte[] LeftBracketBytes = { 0x5B };
         private static readonly byte[] RightBracketBytes = { 0x5D };
 
-        private readonly SdId sdId;
-        private readonly IList<SdParam> sdParams;
+        private readonly SdId _sdId;
+        private readonly IList<SdParam> _sdParams;
 
         public SdElement(SdElementConfig sdElementConfig, EnforcementConfig enforcementConfig)
         {
-            sdId = new SdId(sdElementConfig.SdId , enforcementConfig);
-            sdParams = sdElementConfig.SdParams.Select(sdParamConfig => new SdParam(sdParamConfig, enforcementConfig)).ToList();
+            _sdId = new SdId(sdElementConfig.SdId , enforcementConfig);
+            _sdParams = sdElementConfig.SdParams.Select(sdParamConfig => new SdParam(sdParamConfig, enforcementConfig)).ToList();
         }
 
         public static void AppendBytes(ByteArray message, IEnumerable<SdElement> sdElements, LogEventInfo logEvent, EncodingSet encodings)
         {
             var elements = sdElements
-                .Select(x => new { SdId = x.sdId, RenderedSdId = x.sdId.Render(logEvent), SdParams = x.sdParams })
+                .Select(x => new { SdId = x._sdId, RenderedSdId = x._sdId.Render(logEvent), SdParams = x._sdParams })
                 .ToList();
 
             InternalLogDuplicatesPolicy.Apply(elements, x => x.RenderedSdId);
@@ -47,7 +47,7 @@ namespace NLog.Targets.Syslog.MessageCreation
 
         public override string ToString()
         {
-            return $"[{sdId}{SdParam.ToString(sdParams)}]";
+            return $"[{_sdId}{SdParam.ToString(_sdParams)}]";
         }
     }
 }

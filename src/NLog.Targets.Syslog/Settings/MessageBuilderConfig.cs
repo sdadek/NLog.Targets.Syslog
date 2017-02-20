@@ -4,6 +4,7 @@
 namespace NLog.Targets.Syslog.Settings
 {
     /// <summary>Message build configuration</summary>
+	[Config.NLogConfigurationItem]
     public class MessageBuilderConfig
     {
         /// <summary>The Syslog facility to log from (its name e.g. local0 or local7)</summary>

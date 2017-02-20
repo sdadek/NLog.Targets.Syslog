@@ -13,13 +13,14 @@ namespace NLog.Targets.Syslog.Extensions
 
         public static Assembly EntryAssembly(this StackTrace stackTrace)
         {
-            return stackTrace
-                .GetFrames()
-                ?.Select(x => x.GetMethod().DeclaringType?.Assembly)
-                .Where(x => x != null)
-                .SkipWhile(NotNLog)
-                .First(NotNLog);
-        }
+			return stackTrace
+				.GetFrames()
+				?.Select(x => x.GetType().GetTypeInfo().Assembly)
+				//?.Select(x => x.GetMethod().DeclaringType?.Assembly)
+				.Where(x => x != null)
+				.SkipWhile(NotNLog)
+				.First(NotNLog);
+		}
 
         private static bool NotNLog(Assembly x)
         {
