@@ -11,20 +11,20 @@ namespace NLog.Targets.Syslog
         private const int Zero = 0;
         private const int DefaultBufferCapacity = 65535;
         private const int MaxBufferCapacity = int.MaxValue;
-        private readonly MemoryStream _memoryStream;
+        private readonly MemoryStream memoryStream;
 
-        public int Length => (int)_memoryStream.Length;
+        public int Length => (int)memoryStream.Length;
 
         public ByteArray(long initialCapacity)
         {
             var capacity = EnforceAllowedValues(initialCapacity);
-            _memoryStream = new MemoryStream(capacity);
+            memoryStream = new MemoryStream(capacity);
         }
 
         public static implicit operator byte[](ByteArray byteArray)
         {
-			return GetBuffer<byte>(byteArray._memoryStream);
-		}
+            return byteArray.memoryStream.GetBuffer();
+        }
 
         public byte this[int index]
         {
@@ -33,7 +33,7 @@ namespace NLog.Targets.Syslog
                 if (index >= Length)
                     throw new IndexOutOfRangeException();
 
-                return GetBuffer<byte>(_memoryStream)[index];
+                return memoryStream.GetBuffer()[index];
             }
         }
 
@@ -42,18 +42,18 @@ namespace NLog.Targets.Syslog
             if (buffer.Length == 0)
                 return;
 
-            _memoryStream.Write(buffer, 0, buffer.Length);
+            memoryStream.Write(buffer, 0, buffer.Length);
         }
 
         public void Reset()
         {
-            _memoryStream.SetLength(Zero);
+            memoryStream.SetLength(Zero);
         }
 
         public void Resize(long newLength)
         {
-            if (_memoryStream.Length != newLength)
-                _memoryStream.SetLength(newLength);
+            if (memoryStream.Length != newLength)
+                memoryStream.SetLength(newLength);
         }
 
         private static int EnforceAllowedValues(long initialCapacity)
@@ -67,17 +67,9 @@ namespace NLog.Targets.Syslog
 
         public void Dispose()
         {
-            _memoryStream.SetLength(Zero);
-            _memoryStream.Capacity = Zero;
-            _memoryStream.Dispose();
+            memoryStream.SetLength(Zero);
+            memoryStream.Capacity = Zero;
+            memoryStream.Dispose();
         }
-
-		private static byte[] GetBuffer<T>(MemoryStream ms)
-		{
-			var arraySegment = new ArraySegment<byte>();
-
-			ms.TryGetBuffer(out arraySegment);
-			return arraySegment.Array;
-		}
     }
 }

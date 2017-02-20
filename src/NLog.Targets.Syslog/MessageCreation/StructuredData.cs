@@ -13,18 +13,18 @@ namespace NLog.Targets.Syslog.MessageCreation
         private const string NilValue = "-";
         private static readonly byte[] NilValueBytes = { 0x2D };
 
-        private readonly Layout _fromEventProperties;
-        private readonly IList<SdElement> _sdElements;
+        private readonly Layout fromEventProperties;
+        private readonly IList<SdElement> sdElements;
 
         public StructuredData(StructuredDataConfig sdConfig, EnforcementConfig enforcementConfig)
         {
-            _fromEventProperties = sdConfig.FromEventProperties;
-            _sdElements = sdConfig.SdElements.Select(sdElementConfig => new SdElement(sdElementConfig, enforcementConfig)).ToList();
+            fromEventProperties = sdConfig.FromEventProperties;
+            sdElements = sdConfig.SdElements.Select(sdElementConfig => new SdElement(sdElementConfig, enforcementConfig)).ToList();
         }
 
         public void AppendBytes(ByteArray message, LogEventInfo logEvent, EncodingSet encodings)
         {
-            var sdFromEvtProps = _fromEventProperties.Render(logEvent);
+            var sdFromEvtProps = fromEventProperties.Render(logEvent);
 
             if (!string.IsNullOrEmpty(sdFromEvtProps))
             {
@@ -33,15 +33,15 @@ namespace NLog.Targets.Syslog.MessageCreation
                 return;
             }
 
-            if (_sdElements.Count == 0)
+            if (sdElements.Count == 0)
                 message.Append(NilValueBytes);
             else
-                SdElement.AppendBytes(message, _sdElements, logEvent, encodings);
+                SdElement.AppendBytes(message, sdElements, logEvent, encodings);
         }
 
         public override string ToString()
         {
-            return _sdElements.Count == 0 ? NilValue : SdElement.ToString(_sdElements);
+            return sdElements.Count == 0 ? NilValue : SdElement.ToString(sdElements);
         }
     }
 }

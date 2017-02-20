@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-//using NLog.Targets.Syslog.Extensions;
+using NLog.Targets.Syslog.Extensions;
 
 namespace NLog.Targets.Syslog.Policies
 {

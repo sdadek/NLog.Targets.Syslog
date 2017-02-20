@@ -6,16 +6,15 @@ using System;
 namespace NLog.Targets.Syslog.Settings
 {
     /// <summary>TCP configuration</summary>
-	[Config.NLogConfigurationItem]
-	public class TcpConfig
+    public class TcpConfig
     {
         private const string Localhost = "localhost";
         private const int DefaultPort = 514;
         private const int DefaultReconnectInterval = 500;
         private const int DefaultConnectionCheckTimeout = 500000;
         private const int DefaultBufferSize = 4096;
-        private FramingMethod _framing;
-        private TimeSpan _recoveryTime;
+        private FramingMethod framing;
+        private TimeSpan recoveryTime;
 
         /// <summary>The IP address or hostname of the Syslog server</summary>
         public string Server { get; set; }
@@ -26,8 +25,8 @@ namespace NLog.Targets.Syslog.Settings
         /// <summary>The time interval, in milliseconds, after which a connection is retried</summary>
         public int ReconnectInterval
         {
-            get { return _recoveryTime.Milliseconds; }
-            set { _recoveryTime = TimeSpan.FromMilliseconds(value); }
+            get { return recoveryTime.Milliseconds; }
+            set { recoveryTime = TimeSpan.FromMilliseconds(value); }
         }
 
         /// <summary>KeepAlive configuration</summary>
@@ -43,8 +42,8 @@ namespace NLog.Targets.Syslog.Settings
         /// <remarks>If <see cref="UseTls">is true</see> get will always return OctetCounting (RFC 5425)</remarks>
         public FramingMethod Framing
         {
-            get { return UseTls ? FramingMethod.OctetCounting : _framing; }
-            set { _framing = value; }
+            get { return UseTls ? FramingMethod.OctetCounting : framing; }
+            set { framing = value; }
         }
 
         /// <summary>The size of chunks in which data is split to be sent over the wire</summary>

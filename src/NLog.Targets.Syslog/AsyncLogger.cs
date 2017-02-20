@@ -17,36 +17,36 @@ namespace NLog.Targets.Syslog
 {
     internal class AsyncLogger
     {
-        private readonly Layout _layout;
-        private readonly Throttling _throttling;
-        private readonly CancellationTokenSource _cts;
-        private readonly CancellationToken _token;
-        private readonly BlockingCollection<AsyncLogEventInfo> _queue;
-        private readonly ByteArray _buffer;
-        private readonly MessageTransmitter _messageTransmitter;
+        private readonly Layout layout;
+        private readonly Throttling throttling;
+        private readonly CancellationTokenSource cts;
+        private readonly CancellationToken token;
+        private readonly BlockingCollection<AsyncLogEventInfo> queue;
+        private readonly ByteArray buffer;
+        private readonly MessageTransmitter messageTransmitter;
 
         public AsyncLogger(Layout loggingLayout, EnforcementConfig enforcementConfig, MessageBuilder messageBuilder, MessageTransmitterConfig messageTransmitterConfig)
         {
-            _layout = loggingLayout;
-            _cts = new CancellationTokenSource();
-            _token = _cts.Token;
-            _throttling = Throttling.FromConfig(enforcementConfig.Throttling);
-            _queue = NewBlockingCollection();
-            _buffer = new ByteArray(enforcementConfig.TruncateMessageTo);
-            _messageTransmitter = MessageTransmitter.FromConfig(messageTransmitterConfig);
+            layout = loggingLayout;
+            cts = new CancellationTokenSource();
+            token = cts.Token;
+            throttling = Throttling.FromConfig(enforcementConfig.Throttling);
+            queue = NewBlockingCollection();
+            buffer = new ByteArray(enforcementConfig.TruncateMessageTo);
+            messageTransmitter = MessageTransmitter.FromConfig(messageTransmitterConfig);
             Task.Factory.StartNew(() => ProcessQueueAsync(messageBuilder));
         }
 
-        public async Task Log(AsyncLogEventInfo asyncLogEvent)
+        public void Log(AsyncLogEventInfo asyncLogEvent)
         {
-            await _throttling.Apply(_queue.Count, delay => Enqueue(asyncLogEvent, delay));
+            throttling.Apply(queue.Count, delay => Enqueue(asyncLogEvent, delay));
         }
 
         private BlockingCollection<AsyncLogEventInfo> NewBlockingCollection()
         {
-            var throttlingLimit = _throttling.Limit;
+            var throttlingLimit = throttling.Limit;
 
-            return _throttling.BoundedBlockingCollectionNeeded ?
+            return throttling.BoundedBlockingCollectionNeeded ?
                 new BlockingCollection<AsyncLogEventInfo>(throttlingLimit) :
                 new BlockingCollection<AsyncLogEventInfo>();
         }
@@ -58,23 +58,23 @@ namespace NLog.Targets.Syslog
                 {
                     InternalLogger.Warn(t.Exception?.GetBaseException(), "ProcessQueueAsync faulted within try");
                     return ProcessQueueAsync(messageBuilder);
-                }, _token, TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Current)
+                }, token, TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Current)
                 .Unwrap();
         }
 
         private Task ProcessQueueAsync(MessageBuilder messageBuilder, TaskCompletionSource<object> tcs)
         {
-            if (_token.IsCancellationRequested)
+            if (token.IsCancellationRequested)
                 return tcs.CanceledTask();
 
             try
             {
-                var asyncLogEventInfo = _queue.Take(_token);
-                var logEventMsgSet = new LogEventMsgSet(asyncLogEventInfo, _buffer, messageBuilder, _messageTransmitter);
+                var asyncLogEventInfo = queue.Take(token);
+                var logEventMsgSet = new LogEventMsgSet(asyncLogEventInfo, buffer, messageBuilder, messageTransmitter);
 
                 logEventMsgSet
-                    .Build(_layout)
-                    .SendAsync(_token)
+                    .Build(layout)
+                    .SendAsync(token)
                     .ContinueWith(t =>
                     {
                         if (t.IsCanceled)
@@ -87,7 +87,7 @@ namespace NLog.Targets.Syslog
                         else
                             InternalLogger.Debug($"Successfully sent message '{logEventMsgSet}'");
                         return ProcessQueueAsync(messageBuilder, tcs);
-                    }, _token, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current)
+                    }, token, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current)
                     .Unwrap();
 
                 return tcs.Task;
@@ -100,17 +100,17 @@ namespace NLog.Targets.Syslog
 
         private void Enqueue(AsyncLogEventInfo asyncLogEventInfo, int delay)
         {
-            _queue.TryAdd(asyncLogEventInfo, delay, _token);
+            queue.TryAdd(asyncLogEventInfo, delay, token);
             InternalLogger.Debug($"Enqueued '{asyncLogEventInfo.ToFormattedMessage()}'");
         }
 
         public void Dispose()
         {
-            _cts.Cancel();
-            _cts.Dispose();
-            _queue.Dispose();
-            _buffer.Dispose();
-            _messageTransmitter.Dispose();
+            cts.Cancel();
+            cts.Dispose();
+            queue.Dispose();
+            buffer.Dispose();
+            messageTransmitter.Dispose();
         }
     }
 }

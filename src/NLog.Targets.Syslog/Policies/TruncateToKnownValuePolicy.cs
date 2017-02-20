@@ -8,27 +8,27 @@ namespace NLog.Targets.Syslog.Policies
 {
     internal class TruncateToKnownValuePolicy : IBasicPolicy<string, string>
     {
-        private readonly EnforcementConfig _enforcementConfig;
-        private readonly int _maxLength;
+        private readonly EnforcementConfig enforcementConfig;
+        private readonly int maxLength;
 
         public TruncateToKnownValuePolicy(EnforcementConfig enforcementConfig, int maxLength)
         {
-            _enforcementConfig = enforcementConfig;
-            _maxLength = maxLength;
+            this.enforcementConfig = enforcementConfig;
+            this.maxLength = maxLength;
         }
 
         public bool IsApplicable()
         {
-            return _enforcementConfig.TruncateFieldsToMaxLength && _maxLength > 0;
+            return enforcementConfig.TruncateFieldsToMaxLength && maxLength > 0;
         }
 
         public string Apply(string s)
         {
-            if (s.Length <= _maxLength)
+            if (s.Length <= maxLength)
                 return s;
 
-            var truncated = s.Substring(0, _maxLength);
-            InternalLogger.Trace($"Truncated '{s}' to {_maxLength} characters: '{truncated}'");
+            var truncated = s.Substring(0, maxLength);
+            InternalLogger.Trace($"Truncated '{s}' to {maxLength} characters: '{truncated}'");
             return truncated;
         }
     }

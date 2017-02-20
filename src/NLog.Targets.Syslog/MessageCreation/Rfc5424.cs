@@ -15,38 +15,38 @@ namespace NLog.Targets.Syslog.MessageCreation
         private const string TimestampFormat = "{0:yyyy-MM-ddTHH:mm:ss.ffffffK}";
         private static readonly byte[] SpaceBytes = { 0x20 };
 
-        private readonly string _version;
-        private readonly Layout _hostnameLayout;
-        private readonly Layout _appNameLayout;
-        private readonly Layout _procIdLayout;
-        private readonly Layout _msgIdLayout;
-        private readonly StructuredData _structuredData;
-        private readonly bool _disableBom;
-        private readonly FqdnHostnamePolicySet _hostnamePolicySet;
-        private readonly AppNamePolicySet _appNamePolicySet;
-        private readonly ProcIdPolicySet _procIdPolicySet;
-        private readonly MsgIdPolicySet _msgIdPolicySet;
-        private readonly Utf8MessagePolicy _utf8MessagePolicy;
+        private readonly string version;
+        private readonly Layout hostnameLayout;
+        private readonly Layout appNameLayout;
+        private readonly Layout procIdLayout;
+        private readonly Layout msgIdLayout;
+        private readonly StructuredData structuredData;
+        private readonly bool disableBom;
+        private readonly FqdnHostnamePolicySet hostnamePolicySet;
+        private readonly AppNamePolicySet appNamePolicySet;
+        private readonly ProcIdPolicySet procIdPolicySet;
+        private readonly MsgIdPolicySet msgIdPolicySet;
+        private readonly Utf8MessagePolicy utf8MessagePolicy;
 
         public Rfc5424(Facility facility, Rfc5424Config rfc5424Config, EnforcementConfig enforcementConfig) : base(facility, enforcementConfig)
         {
-            _version = DefaultVersion;
-            _hostnameLayout = rfc5424Config.Hostname;
-            _appNameLayout = rfc5424Config.AppName;
-            _procIdLayout = NilValue;
-            _msgIdLayout = NilValue;
-            _structuredData = new StructuredData(rfc5424Config.StructuredData, enforcementConfig);
-            _disableBom = rfc5424Config.DisableBom;
-            _hostnamePolicySet = new FqdnHostnamePolicySet(enforcementConfig, rfc5424Config.DefaultHostname);
-            _appNamePolicySet = new AppNamePolicySet(enforcementConfig, rfc5424Config.DefaultAppName);
-            _procIdPolicySet = new ProcIdPolicySet(enforcementConfig);
-            _msgIdPolicySet = new MsgIdPolicySet(enforcementConfig);
-            _utf8MessagePolicy = new Utf8MessagePolicy(enforcementConfig);
+            version = DefaultVersion;
+            hostnameLayout = rfc5424Config.Hostname;
+            appNameLayout = rfc5424Config.AppName;
+            procIdLayout = NilValue;
+            msgIdLayout = NilValue;
+            structuredData = new StructuredData(rfc5424Config.StructuredData, enforcementConfig);
+            disableBom = rfc5424Config.DisableBom;
+            hostnamePolicySet = new FqdnHostnamePolicySet(enforcementConfig, rfc5424Config.DefaultHostname);
+            appNamePolicySet = new AppNamePolicySet(enforcementConfig, rfc5424Config.DefaultAppName);
+            procIdPolicySet = new ProcIdPolicySet(enforcementConfig);
+            msgIdPolicySet = new MsgIdPolicySet(enforcementConfig);
+            utf8MessagePolicy = new Utf8MessagePolicy(enforcementConfig);
         }
 
         protected override void PrepareMessage(ByteArray buffer, LogEventInfo logEvent, string pri, string logEntry)
         {
-            var encodings = new EncodingSet(!_disableBom);
+            var encodings = new EncodingSet(!disableBom);
 
             AppendHeaderBytes(buffer, pri, logEvent, encodings);
             buffer.Append(SpaceBytes);
@@ -54,24 +54,24 @@ namespace NLog.Targets.Syslog.MessageCreation
             buffer.Append(SpaceBytes);
             AppendMsgBytes(buffer, logEntry, encodings);
 
-            _utf8MessagePolicy.Apply(buffer);
+            utf8MessagePolicy.Apply(buffer);
         }
 
         private void AppendHeaderBytes(ByteArray buffer, string pri, LogEventInfo logEvent, EncodingSet encodings)
         {
             var timestamp = string.Format(CultureInfo.InvariantCulture, TimestampFormat, logEvent.TimeStamp);
-            var hostname = _hostnamePolicySet.Apply(_hostnameLayout.Render(logEvent));
-            var appName = _appNamePolicySet.Apply(_appNameLayout.Render(logEvent));
-            var procId = _procIdPolicySet.Apply(_procIdLayout.Render(logEvent));
-            var msgId = _msgIdPolicySet.Apply(_msgIdLayout.Render(logEvent));
-            var header = $"{pri}{_version} {timestamp} {hostname} {appName} {procId} {msgId}";
+            var hostname = hostnamePolicySet.Apply(hostnameLayout.Render(logEvent));
+            var appName = appNamePolicySet.Apply(appNameLayout.Render(logEvent));
+            var procId = procIdPolicySet.Apply(procIdLayout.Render(logEvent));
+            var msgId = msgIdPolicySet.Apply(msgIdLayout.Render(logEvent));
+            var header = $"{pri}{version} {timestamp} {hostname} {appName} {procId} {msgId}";
             var headerBytes = encodings.Ascii.GetBytes(header);
             buffer.Append(headerBytes);
         }
 
         private void AppendStructuredDataBytes(ByteArray buffer, LogEventInfo logEvent, EncodingSet encodings)
         {
-            _structuredData.AppendBytes(buffer, logEvent, encodings);
+            structuredData.AppendBytes(buffer, logEvent, encodings);
         }
 
         private static void AppendMsgBytes(ByteArray buffer, string logEntry, EncodingSet encodings)

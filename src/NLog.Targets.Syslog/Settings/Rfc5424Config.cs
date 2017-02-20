@@ -8,9 +8,8 @@ using NLog.Targets.Syslog.Extensions;
 
 namespace NLog.Targets.Syslog.Settings
 {
-	/// <summary>RFC 5424 configuration</summary>
-	[Config.NLogConfigurationItem]
-	public class Rfc5424Config
+    /// <summary>RFC 5424 configuration</summary>
+    public class Rfc5424Config
     {
         private const string DefaultVersion = "1";
         private const string NilValue = "-";

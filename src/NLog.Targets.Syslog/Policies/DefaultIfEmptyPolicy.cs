@@ -7,16 +7,16 @@ namespace NLog.Targets.Syslog.Policies
 {
     internal class DefaultIfEmptyPolicy : IBasicPolicy<string, string>
     {
-        private readonly string _defaultValue;
+        private readonly string defaultValue;
 
         public DefaultIfEmptyPolicy(string defaultValue)
         {
-            _defaultValue = defaultValue;
+            this.defaultValue = defaultValue;
         }
 
         public bool IsApplicable()
         {
-            return !string.IsNullOrEmpty(_defaultValue);
+            return !string.IsNullOrEmpty(defaultValue);
         }
 
         public string Apply(string s)
@@ -24,8 +24,8 @@ namespace NLog.Targets.Syslog.Policies
             if (s.Length != 0)
                 return s;
 
-            InternalLogger.Trace($"Applied default value '{_defaultValue}'");
-            return _defaultValue;
+            InternalLogger.Trace($"Applied default value '{defaultValue}'");
+            return defaultValue;
         }
     }
 }

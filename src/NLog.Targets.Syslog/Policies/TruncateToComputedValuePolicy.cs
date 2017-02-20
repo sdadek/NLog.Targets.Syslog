@@ -11,35 +11,35 @@ namespace NLog.Targets.Syslog.Policies
     {
         // RFC 5426 (UDP/IPv6) with jumbograms: (2^32 - 1) - 40 - 8 = 4294967247
         private const long MaxLengthNotToBeExceeded = 4294967247;
-        private readonly long _messageMaxLength;
-        private readonly bool _assumeAscii;
+        private readonly long messageMaxLength;
+        private readonly bool assumeAscii;
 
         public TruncateToComputedValuePolicy(EnforcementConfig enforcementConfig, bool assumeAsciiEncoding)
         {
-            _messageMaxLength = enforcementConfig.TruncateMessageTo > MaxLengthNotToBeExceeded ? MaxLengthNotToBeExceeded : enforcementConfig.TruncateMessageTo;
-            _assumeAscii = assumeAsciiEncoding;
+            messageMaxLength = enforcementConfig.TruncateMessageTo > MaxLengthNotToBeExceeded ? MaxLengthNotToBeExceeded : enforcementConfig.TruncateMessageTo;
+            assumeAscii = assumeAsciiEncoding;
         }
 
         public bool IsApplicable()
         {
-            return _messageMaxLength > 0;
+            return messageMaxLength > 0;
         }
 
         public void Apply(ByteArray bytes)
         {
-            var maxLength = _messageMaxLength;
+            var maxLength = messageMaxLength;
 
             if (maxLength <= 0 || maxLength >= bytes.Length)
                 return;
 
             var computedMaxLength = MaxLengthToAvoidCharCorruption(bytes, maxLength);
             bytes.Resize(computedMaxLength);
-            InternalLogger.Trace($"Truncated byte array to {computedMaxLength} bytes (truncateMessageTo {_messageMaxLength})");
+            InternalLogger.Trace($"Truncated byte array to {computedMaxLength} bytes (truncateMessageTo {messageMaxLength})");
         }
 
         private long MaxLengthToAvoidCharCorruption(ByteArray bytes, long updatedMaxLength)
         {
-            if (_assumeAscii)
+            if (assumeAscii)
                 return updatedMaxLength;
 
             var computedMaxLength = bytes.Length;

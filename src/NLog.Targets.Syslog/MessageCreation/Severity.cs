@@ -7,7 +7,7 @@ namespace NLog.Targets.Syslog.MessageCreation
 {
     internal class Severity
     {
-        private readonly int _value;
+        private readonly int value;
         private static readonly Severity Emergency = new Severity(0);
         //private static readonly Severity Alert = new Severity(1);
         //private static readonly Severity Critical = new Severity(2);
@@ -33,12 +33,12 @@ namespace NLog.Targets.Syslog.MessageCreation
 
         private Severity(int value)
         {
-            _value = value;
+            this.value = value;
         }
 
         public static explicit operator int(Severity severity)
         {
-            return severity._value;
+            return severity.value;
         }
 
         public static explicit operator Severity(LogLevel logLevel)

@@ -17,32 +17,32 @@ namespace NLog.Targets.Syslog.MessageSend
     // };
     internal class KeepAlive
     {
-        private readonly int _onOffOffset;
-        private readonly int _timeOffset;
-        private readonly int _intervalOffset;
-        private readonly int _structSize;
-        private readonly uint _onOff;
-        private readonly uint _time;
-        private readonly uint _interval;
+        private readonly int onOffOffset;
+        private readonly int timeOffset;
+        private readonly int intervalOffset;
+        private readonly int structSize;
+        private readonly uint onOff;
+        private readonly uint time;
+        private readonly uint interval;
 
         public KeepAlive(KeepAliveConfig keepAliveConfig)
         {
-			var uintSize = Marshal.SizeOf<uint>();// (typeof(uint));
-            _onOffOffset = 0;
-            _timeOffset = uintSize;
-            _intervalOffset = 2 * uintSize;
-            _structSize = 3 * uintSize;
-            _onOff = (uint)(keepAliveConfig.Enabled ? 1 : 0);
-            _time = (uint)keepAliveConfig.Timeout;
-            _interval = (uint)keepAliveConfig.Interval;
+            var uintSize = Marshal.SizeOf(typeof(uint));
+            onOffOffset = 0;
+            timeOffset = uintSize;
+            intervalOffset = 2 * uintSize;
+            structSize = 3 * uintSize;
+            onOff = (uint)(keepAliveConfig.Enabled ? 1 : 0);
+            time = (uint)keepAliveConfig.Timeout;
+            interval = (uint)keepAliveConfig.Interval;
         }
 
         public byte[] ToByteArray()
         {
-            var keepAliveSettings = new byte[_structSize];
-            BitConverter.GetBytes(_onOff).CopyTo(keepAliveSettings, _onOffOffset);
-            BitConverter.GetBytes(_time).CopyTo(keepAliveSettings, _timeOffset);
-            BitConverter.GetBytes(_interval).CopyTo(keepAliveSettings, _intervalOffset);
+            var keepAliveSettings = new byte[structSize];
+            BitConverter.GetBytes(onOff).CopyTo(keepAliveSettings, onOffOffset);
+            BitConverter.GetBytes(time).CopyTo(keepAliveSettings, timeOffset);
+            BitConverter.GetBytes(interval).CopyTo(keepAliveSettings, intervalOffset);
             return keepAliveSettings;
         }
     }

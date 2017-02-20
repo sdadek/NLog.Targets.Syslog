@@ -7,9 +7,8 @@ using NLog.Targets.Syslog.Extensions;
 
 namespace NLog.Targets.Syslog.Settings
 {
-	/// <summary>RFC 3164 configuration</summary>
-	[Config.NLogConfigurationItem]
-	public class Rfc3164Config
+    /// <summary>RFC 3164 configuration</summary>
+    public class Rfc3164Config
     {
         /// <summary>The HOSTNAME field of the HEADER part</summary>
         public Layout Hostname { get; set; }

@@ -17,7 +17,7 @@ namespace NLog.Targets.Syslog.MessageSend
 
         protected string Server { get; }
 
-		private string _ipAddress;
+        protected string IpAddress { get; }
 
         protected int Port { get; }
 
@@ -38,21 +38,12 @@ namespace NLog.Targets.Syslog.MessageSend
         protected MessageTransmitter(string server, int port)
         {
             Server = server;
-			Port = port;
+            IpAddress = Dns.GetHostAddresses(server).FirstOrDefault()?.ToString();
+            Port = port;
         }
 
         public abstract Task SendMessageAsync(ByteArray message, CancellationToken token);
 
         public abstract void Dispose();
-
-		protected async Task<string> GetHostAddresses()
-		{
-			if (string.IsNullOrEmpty(_ipAddress))
-			{
-				_ipAddress = (await Dns.GetHostAddressesAsync(Server)).FirstOrDefault()?.ToString();
-			}
-
-			return _ipAddress;
-		}
     }
 }

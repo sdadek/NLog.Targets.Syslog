@@ -9,23 +9,23 @@ namespace NLog.Targets.Syslog.MessageCreation
 {
     internal class SdId
     {
-        private readonly SimpleLayout _layout;
-        private readonly SdIdPolicySet _sdIdPolicySet;
+        private readonly SimpleLayout layout;
+        private readonly SdIdPolicySet sdIdPolicySet;
 
         public SdId(SimpleLayout sdIdConfig, EnforcementConfig enforcementConfig)
         {
-            _layout = sdIdConfig;
-            _sdIdPolicySet = new SdIdPolicySet(enforcementConfig);
+            layout = sdIdConfig;
+            sdIdPolicySet = new SdIdPolicySet(enforcementConfig);
         }
 
         public string Render(LogEventInfo logEvent)
         {
-            return _layout.Render(logEvent);
+            return layout.Render(logEvent);
         }
 
         public void AppendBytes(ByteArray message, string renderedSdId, EncodingSet encodings)
         {
-            var sdId = _sdIdPolicySet.Apply(renderedSdId);
+            var sdId = sdIdPolicySet.Apply(renderedSdId);
             var sdIdBytes = encodings.Ascii.GetBytes(sdId);
             message.Append(sdIdBytes);
         }
